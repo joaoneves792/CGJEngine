@@ -5,6 +5,7 @@
 
 #include <GL/glew.h>
 #include <Meshes/H3DMesh.h>
+#include <CGJengine.h>
 #include "Meshes/H3DMesh.h"
 #include "Texture.h"
 
@@ -392,9 +393,9 @@ void H3DMesh::setMaterial(h3d_material *material){
                                 material->emissive, material->shininess, material->transparency);
     }
 
-    if( material->textureId >= 0){
-        glActiveTexture(GL_TEXTURE0+TEXTURE_SLOT);
-        glBindTexture( GL_TEXTURE_2D, (GLuint)material->textureId);
+    for(unsigned int i=0;i<material->textureCount;i++) {
+        glActiveTexture(GL_TEXTURE0 + i);
+        glBindTexture(GL_TEXTURE_2D, (GLuint) material->textureId[i]);
     }
 }
 
@@ -489,22 +490,26 @@ void H3DMesh::loadFromFile(const std::string& filename) {
 
     for(int i=0;i<_materialCount;i++){
         //Get the texture file
-        byte numChars;
-        fread(&numChars, 1, sizeof(byte), fp);
-        _materials[i].textureImage = new char[numChars+1];
-        if(numChars > 0) {
-            fread(_materials[i].textureImage, numChars, sizeof(char), fp);
-            _materials[i].textureImage[numChars] = '\0';
+        fread(&_materials[i].textureCount, 1, sizeof(int), fp);
+        _materials[i].textureImage = new char*[_materials[i].textureCount];
+        _materials[i].textureId = new GLint[_materials[i].textureCount];
+        for(int j=0; j<_materials[i].textureCount;j++) {
+            byte numChars;
+            fread(&numChars, 1, sizeof(byte), fp);
+            _materials[i].textureImage[j] = new char[numChars + 1];
+            if (numChars > 0) {
+                fread(_materials[i].textureImage[j], numChars, sizeof(char), fp);
+                _materials[i].textureImage[j][numChars] = '\0';
 
-            //Load the texture
-            std::string texturePath("./");
-            texturePath.assign(folderPath);
-            texturePath.append(_materials[i].textureImage);
-            _materials[i].textureId = Texture::LoadGLTexture(texturePath.c_str());
-        }else {
-            _materials[i].textureId = -1;
+                //Load the texture
+                std::string texturePath("./");
+                texturePath.assign(folderPath);
+                texturePath.append(_materials[i].textureImage[j]);
+                _materials[i].textureId[j] = Texture::LoadGLTexture(texturePath.c_str());
+            } else {
+                _materials[i].textureId[j] = -1;
+            }
         }
-
         fread(&_materials[i].ambient, 1, sizeof(float), fp);
         fread(&_materials[i].diffuse, 3, sizeof(float), fp);
         fread(&_materials[i].specular, 3, sizeof(float), fp);
