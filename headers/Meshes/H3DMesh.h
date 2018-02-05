@@ -132,6 +132,7 @@ typedef struct{
 	size_t positionSize;
 	size_t textureCoordSize;
 	size_t normalsSize;
+    size_t tangentsSize;
     size_t jointsSize;
 	size_t weightsSize;
     size_t* shapeKeysIndices; //Size is same as position/normals size

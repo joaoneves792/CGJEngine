@@ -129,6 +129,8 @@ void H3DMesh::prepareGroup(h3d_group *group, unsigned int groupIndex) {
 
     auto *vertices  = new GLfloat[group->numVertices*3];
     auto *normals   = new GLfloat[group->numVertices*3];
+    auto *tangents  = new GLfloat[group->numVertices*3];
+    auto *bitangents  = new GLfloat[group->numVertices*3];
     auto *texCoords = new GLfloat[group->numVertices*2];
     auto *bone_indices = new GLfloat[group->numVertices*BONE_COUNT];
     auto *bone_weights = new GLfloat[group->numVertices*BONE_COUNT];
@@ -142,13 +144,34 @@ void H3DMesh::prepareGroup(h3d_group *group, unsigned int groupIndex) {
 
     for(int i=0;i<group->numVertices;i++){
 
-        vertices[vi++] = group->vertices[i].vertex[0];
-        vertices[vi++] = group->vertices[i].vertex[1];
-        vertices[vi++] = group->vertices[i].vertex[2];
+        vertices[vi+0] = group->vertices[i].vertex[0];
+        vertices[vi+1] = group->vertices[i].vertex[1];
+        vertices[vi+2] = group->vertices[i].vertex[2];
 
-        normals[ni++] = group->vertices[i].normal[0];
-        normals[ni++] = group->vertices[i].normal[1];
-        normals[ni++] = group->vertices[i].normal[2];
+        Vec3 t = Vec3(group->vertices[i].tangent[0], group->vertices[i].tangent[1], group->vertices[i].tangent[2]);
+        Vec3 b = Vec3(group->vertices[i].bitangent[0], group->vertices[i].bitangent[1], group->vertices[i].bitangent[2]);
+        Vec3 n = Vec3(group->vertices[i].normal[0], group->vertices[i].normal[1], group->vertices[i].normal[2]);
+
+        //Orthogonalization
+        t = glm::normalize(t - n * glm::dot(n, t));
+        //Handedness
+        if (glm::dot(glm::cross(n, t), b) < 0.0f){
+            t = t * -1.0f;
+        }
+
+        normals[ni++] = n[0];
+        normals[ni++] = n[1];
+        normals[ni++] = n[2];
+
+        tangents[vi+0] = t[0];
+        tangents[vi+1] = t[1];
+        tangents[vi+2] = t[2];
+
+        bitangents[vi+0] = b[0];
+        bitangents[vi+1] = b[1];
+        bitangents[vi+2] = b[2];
+
+        vi += 3;
 
         texCoords[ti++] = group->vertices[i].uv[0];
         texCoords[ti++] = group->vertices[i].uv[1];
@@ -171,12 +194,15 @@ void H3DMesh::prepareGroup(h3d_group *group, unsigned int groupIndex) {
 
     _vboDescriptions[groupIndex].positionSize     = sizeof(GLfloat)*group->numVertices*3;
     _vboDescriptions[groupIndex].normalsSize      = sizeof(GLfloat)*group->numVertices*3;
+    _vboDescriptions[groupIndex].tangentsSize     = sizeof(GLfloat)*group->numVertices*3;
     _vboDescriptions[groupIndex].textureCoordSize = sizeof(GLfloat)*group->numVertices*2;
     _vboDescriptions[groupIndex].jointsSize       = sizeof(GLfloat)*group->numVertices*BONE_COUNT;
     _vboDescriptions[groupIndex].weightsSize      = sizeof(GLfloat)*group->numVertices*BONE_COUNT;
 
     _vboDescriptions[groupIndex].totalSize = _vboDescriptions[groupIndex].positionSize
                                              + _vboDescriptions[groupIndex].normalsSize
+                                             + _vboDescriptions[groupIndex].tangentsSize
+                                             + _vboDescriptions[groupIndex].tangentsSize //bitangents
                                              + _vboDescriptions[groupIndex].textureCoordSize
                                              + _vboDescriptions[groupIndex].jointsSize
                                              + _vboDescriptions[groupIndex].weightsSize;
@@ -185,55 +211,56 @@ void H3DMesh::prepareGroup(h3d_group *group, unsigned int groupIndex) {
     glBufferData(GL_ARRAY_BUFFER, _vboDescriptions[groupIndex].totalSize, nullptr, GL_STATIC_DRAW);
 
     /*Copy the data to the buffer*/
-    glBufferSubData(GL_ARRAY_BUFFER, 0, _vboDescriptions[groupIndex].positionSize, vertices);
-    glBufferSubData(GL_ARRAY_BUFFER, _vboDescriptions[groupIndex].positionSize,
-                    _vboDescriptions[groupIndex].textureCoordSize, texCoords);
-    glBufferSubData(GL_ARRAY_BUFFER, _vboDescriptions[groupIndex].positionSize +
-                                     _vboDescriptions[groupIndex].textureCoordSize,
-                    _vboDescriptions[groupIndex].normalsSize, normals);
-    glBufferSubData(GL_ARRAY_BUFFER, _vboDescriptions[groupIndex].positionSize +
-                                     _vboDescriptions[groupIndex].textureCoordSize +
-                                     _vboDescriptions[groupIndex].normalsSize,
-                    _vboDescriptions[groupIndex].jointsSize, bone_indices);
-
-    glBufferSubData(GL_ARRAY_BUFFER, _vboDescriptions[groupIndex].positionSize +
-                                     _vboDescriptions[groupIndex].textureCoordSize +
-                                     _vboDescriptions[groupIndex].normalsSize +
-                                     _vboDescriptions[groupIndex].jointsSize,
-                    _vboDescriptions[groupIndex].weightsSize, bone_weights);
+    size_t accumulated_size = 0;
+    glBufferSubData(GL_ARRAY_BUFFER, accumulated_size, _vboDescriptions[groupIndex].positionSize, vertices);
+    accumulated_size += _vboDescriptions[groupIndex].positionSize;
+    glBufferSubData(GL_ARRAY_BUFFER, accumulated_size, _vboDescriptions[groupIndex].textureCoordSize, texCoords);
+    accumulated_size += _vboDescriptions[groupIndex].textureCoordSize;
+    glBufferSubData(GL_ARRAY_BUFFER, accumulated_size, _vboDescriptions[groupIndex].normalsSize, normals);
+    accumulated_size += _vboDescriptions[groupIndex].normalsSize;
+    glBufferSubData(GL_ARRAY_BUFFER, accumulated_size, _vboDescriptions[groupIndex].tangentsSize, tangents);
+    accumulated_size += _vboDescriptions[groupIndex].tangentsSize;
+    glBufferSubData(GL_ARRAY_BUFFER, accumulated_size, _vboDescriptions[groupIndex].tangentsSize, bitangents);
+    accumulated_size += _vboDescriptions[groupIndex].tangentsSize;
+    glBufferSubData(GL_ARRAY_BUFFER, accumulated_size, _vboDescriptions[groupIndex].jointsSize, bone_indices);
+    accumulated_size += _vboDescriptions[groupIndex].jointsSize;
+    glBufferSubData(GL_ARRAY_BUFFER, accumulated_size, _vboDescriptions[groupIndex].weightsSize, bone_weights);
 
     //Set up the indices
     glGenBuffers(1, &_eab[groupIndex]);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _eab[groupIndex]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indexInt)*ii , indices, GL_STATIC_DRAW);
 
-
+    accumulated_size = 0;
     //Position Attribute
-    glVertexAttribPointer(VERTICES__ATTR, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat)*3, nullptr);
+    glVertexAttribPointer(VERTICES__ATTR, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat)*3, (GLvoid *)accumulated_size);
     glEnableVertexAttribArray(VERTICES__ATTR);
+    accumulated_size += _vboDescriptions[groupIndex].positionSize;
 
     //Texture coord attribute
-    glVertexAttribPointer(TEXCOORDS__ATTR, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)_vboDescriptions[groupIndex].positionSize);
+    glVertexAttribPointer(TEXCOORDS__ATTR, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)accumulated_size);
     glEnableVertexAttribArray(TEXCOORDS__ATTR);
+    accumulated_size += _vboDescriptions[groupIndex].textureCoordSize;
 
     //Normals attribute
-    glVertexAttribPointer(NORMALS__ATTR, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid *)
-            (_vboDescriptions[groupIndex].positionSize+
-             _vboDescriptions[groupIndex].textureCoordSize) );
+    glVertexAttribPointer(NORMALS__ATTR, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid *)accumulated_size);
     glEnableVertexAttribArray(NORMALS__ATTR);
+    accumulated_size += _vboDescriptions[groupIndex].normalsSize;
+
+    //Tangents and bitangents
+    glVertexAttribPointer(TANGENTS__ATTR, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)accumulated_size);
+    glEnableVertexAttribArray(TANGENTS__ATTR);
+    accumulated_size += _vboDescriptions[groupIndex].tangentsSize;
+    glVertexAttribPointer(BITANGENTS__ATTR, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)accumulated_size);
+    glEnableVertexAttribArray(BITANGENTS__ATTR);
+    accumulated_size += _vboDescriptions[groupIndex].tangentsSize;
 
     //bone indexes attribute
-    glVertexAttribPointer(BONEINDICES__ATTR, BONE_COUNT, GL_FLOAT, GL_FALSE, 0, (GLvoid *)
-            (_vboDescriptions[groupIndex].positionSize +
-             _vboDescriptions[groupIndex].textureCoordSize +
-             _vboDescriptions[groupIndex].normalsSize) );
+    glVertexAttribPointer(BONEINDICES__ATTR, BONE_COUNT, GL_FLOAT, GL_FALSE, 0, (GLvoid *)accumulated_size);
     glEnableVertexAttribArray(BONEINDICES__ATTR);
+    accumulated_size += _vboDescriptions[groupIndex].jointsSize;
 
-    glVertexAttribPointer(BONEWEIGHTS__ATTR, BONE_COUNT, GL_FLOAT, GL_FALSE, 0, (GLvoid *)
-            (_vboDescriptions[groupIndex].positionSize +
-             _vboDescriptions[groupIndex].textureCoordSize +
-             _vboDescriptions[groupIndex].normalsSize +
-             _vboDescriptions[groupIndex].jointsSize) );
+    glVertexAttribPointer(BONEWEIGHTS__ATTR, BONE_COUNT, GL_FLOAT, GL_FALSE, 0, (GLvoid *)accumulated_size);
     glEnableVertexAttribArray(BONEWEIGHTS__ATTR);
 
     glBindVertexArray(0);
@@ -244,6 +271,8 @@ void H3DMesh::prepareGroup(h3d_group *group, unsigned int groupIndex) {
     delete[] vertices;
     delete[] indices;
     delete[] normals;
+    delete[] tangents;
+    delete[] bitangents;
     delete[] texCoords;
     delete[] bone_indices;
     delete[] bone_weights;
