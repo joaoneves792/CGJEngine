@@ -446,6 +446,8 @@ void H3DMesh::loadFromFile(const std::string& filename) {
             /*fread(&_groups[i].vertices[j], 1, sizeof(h3d_vertex), fp);*/
             fread(_groups[i].vertices[j].vertex, 3, sizeof(float), fp);
             fread(_groups[i].vertices[j].normal, 3, sizeof(float), fp);
+            fread(_groups[i].vertices[j].tangent, 3, sizeof(float), fp);
+            fread(_groups[i].vertices[j].bitangent, 3, sizeof(float), fp);
             fread(_groups[i].vertices[j].uv, 2, sizeof(float), fp);
             for(int k=0;k<BONE_COUNT;k++) {
                 fread(&_groups[i].vertices[j].boneID[k], 1, sizeof(int), fp);

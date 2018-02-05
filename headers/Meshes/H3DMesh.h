@@ -39,6 +39,8 @@ typedef struct
 {
     float   vertex[3];
 	float 	normal[3];
+	float   tangent[3];
+	float   bitangent[3];
 	float 	uv[2];
 	int     boneID[BONE_COUNT];                                    // -1 = no bone
     float   weight[BONE_COUNT];
