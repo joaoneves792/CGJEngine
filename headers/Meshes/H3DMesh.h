@@ -157,6 +157,8 @@ private:
 	std::function<void(float ambient, float* diffuse, float* specular,
 					   float* emissive, float shininess, float transparency)> _uploadMaterialCallback;
 
+	std::function<void(int i, Mat4 transform)> _boneUploadCallback;
+
 	bool _isAnimated;
 	int _currentFrame;
 
@@ -177,6 +179,7 @@ public:
 
 	void setMaterialUploadCallback(std::function<void(float ambient, float* diffuse, float* specular,
 					   float* emissive, float shininess, float transparency)> callback );
+	void setBoneUploadCallback(std::function<void(int i, Mat4 transform)> callback);
 
 private:
 	void prepareGroup(h3d_group* group, unsigned int groupIndex);

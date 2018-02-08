@@ -27,6 +27,7 @@ H3DMesh::H3DMesh() {
     _isAnimated = false;
 
     _uploadMaterialCallback = nullptr;
+    _boneUploadCallback = nullptr;
 }
 
 H3DMesh::H3DMesh(const std::string &filename) {
@@ -47,6 +48,7 @@ H3DMesh::H3DMesh(const std::string &filename) {
     _isAnimated = false;
 
     _uploadMaterialCallback = nullptr;
+    _boneUploadCallback = nullptr;
 
     loadFromFile(filename);
     prepare();
@@ -344,10 +346,8 @@ Mat4 H3DMesh::getBindPose(h3d_joint* joint) {
 }
 
 void H3DMesh::handleAnimation(h3d_group* group) {
-    //Check for the Uniform, if its none existent then do nothing
-    //GLint bones = glGetUniformLocation(_shader, "bones");
-    //if(-1 == bones)
-    //    return;
+    if(nullptr == _boneUploadCallback)
+        return;
 
     h3d_armature* armature = &_armatures[group->armatureIndex];
 
@@ -358,6 +358,7 @@ void H3DMesh::handleAnimation(h3d_group* group) {
 
     if(!group->isAnimated){ //If not animated the we still have to upload identities if the bones exist
         for(int i=0; i<armature->jointsCount; i++) {
+            _boneUploadCallback(i, transforms[i]);
             //glUniformMatrix4fv(bones + i, 1, GL_FALSE, glm::value_ptr(transforms[i]));
         }
         delete[] transforms;
@@ -389,6 +390,7 @@ void H3DMesh::handleAnimation(h3d_group* group) {
     }
 
     for(int i=0; i<armature->jointsCount; i++) {
+        _boneUploadCallback(i, transforms[i]);
         //glUniformMatrix4fv(bones + i, 1, GL_FALSE, glm::value_ptr(transforms[i]));
     }
     delete[] hasParentTransform;
@@ -396,9 +398,13 @@ void H3DMesh::handleAnimation(h3d_group* group) {
 
 }
 
+void H3DMesh::setBoneUploadCallback(std::function<void(int i, Mat4 transform)> callback) {
+    _boneUploadCallback = callback;
+}
+
 void H3DMesh::draw() {
     for(int i=0; i < _groupCount; i++){
-        //handleAnimation(&_groups[i]);
+        handleAnimation(&_groups[i]);
         int materialIndex = _groups[i].materialIndex;
         if( materialIndex >= 0 )
             setMaterial(&_materials[materialIndex]);
