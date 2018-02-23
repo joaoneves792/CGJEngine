@@ -43,6 +43,8 @@ public:
     void update(int dt);
     void draw();
     void draw(int level);
+    void draw(int level, Shader* shader);
+    void draw(Shader* shader);
 };
 
 #endif //CGJM_SCENEGRAPH_H

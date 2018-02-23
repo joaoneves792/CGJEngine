@@ -53,13 +53,25 @@ void SceneGraph::update(int dt) {
 }
 
 void SceneGraph::draw(int level){
-    if(_root != nullptr)
-        _root->draw(level, Mat4(1.0f), Quat(), Mat4(1.0f));
+    draw(level, nullptr);
 }
 
 void SceneGraph::draw(){
-    draw(0);
+    draw(0, nullptr);
 }
+
+void SceneGraph::draw(Shader *shader) {
+    draw(0, shader);
+}
+
+void SceneGraph::draw(int level, Shader *shader) {
+    if(_root != nullptr)
+        _root->draw(level, Mat4(1.0f), Quat(), Mat4(1.0f), shader);
+
+}
+
+
+
 SceneNode* SceneGraph::findNode(const std::string& name) {
     auto it = _lookUpTable.find(name);
     if(it!=_lookUpTable.end())

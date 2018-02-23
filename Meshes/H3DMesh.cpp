@@ -318,6 +318,7 @@ Mat4 H3DMesh::getBoneTransform(h3d_joint* joint) {
             lerpFactor = ((float)(_currentFrame - prevKeyframe->frame)) /
                          ((float)(nextKeyframe->frame - prevKeyframe->frame));
         }
+        //std::cout << lerpFactor << std::endl;
         if (lerpFactor < 0)
             lerpFactor = 0;
         if (lerpFactor > 1)
