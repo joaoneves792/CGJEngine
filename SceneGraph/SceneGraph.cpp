@@ -39,6 +39,10 @@ Mat4 SceneGraph::getViewMatrix() {
         return Mat4(1.0f);
 }
 
+void SceneGraph::setCamera(Camera *camera) {
+    _camera = camera;
+}
+
 Camera* SceneGraph::getCamera() {
     return _camera;
 }

@@ -36,6 +36,7 @@ public:
     Mat4 getProjectionMatrix();
 
     Camera* getCamera();
+    void setCamera(Camera* camera);
     SceneNode* getRoot();
 
     SceneNode* findNode(const std::string& name);
