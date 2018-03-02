@@ -20,6 +20,11 @@ Mat4 SphereCamera::produceViewMatrix() {
            * glm::translate(glm::toMat4(_orientation), Vec3(-_center[0], -_center[1], -_center[2]));
 }
 
+Mat4 SphereCamera::getInverseViewMatrix() {
+    //TODO: try not to invert the matrix
+    return glm::inverse(produceViewMatrix());
+}
+
 void SphereCamera::move(float x, float y, float z){
     _distance = _distance + z;
 }

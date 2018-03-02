@@ -28,6 +28,11 @@ Mat4 HUDCamera::produceViewMatrix() {
     //return Mat4(1.0f);
 }
 
+Mat4 HUDCamera::getInverseViewMatrix() {
+    return glm::toMat4(glm::inverse(_orientation)) *
+           glm::translate(Mat4(1.0f), Vec3(_position[0], _position[1], _position[2]));
+}
+
 void HUDCamera::resize(int x, int y) {
     if(_scale)
         return;
