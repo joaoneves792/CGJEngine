@@ -115,7 +115,7 @@ typedef struct
     float           emissive[4];                        //
     float           shininess;                          // 0.0f - 128.0f
     float           transparency;                       // 0.0f - 1.0f
-    int             textureCount;
+    unsigned int    textureCount;
 	char**          textureImage;
 	GLint* 			textureId;
 } h3d_material;

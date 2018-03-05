@@ -531,7 +531,7 @@ void H3DMesh::loadFromFile(const std::string& filename) {
         fread(&_materials[i].textureCount, 1, sizeof(int), fp);
         _materials[i].textureImage = new char*[_materials[i].textureCount];
         _materials[i].textureId = new GLint[_materials[i].textureCount];
-        for(int j=0; j<_materials[i].textureCount;j++) {
+        for(unsigned int j=0; j<_materials[i].textureCount;j++) {
             byte numChars;
             fread(&numChars, 1, sizeof(byte), fp);
             _materials[i].textureImage[j] = new char[numChars + 1];
