@@ -104,6 +104,7 @@ typedef struct
 
 	int 			shapeKeyCount;
 	h3d_shape_key*	shapeKeys;
+	float			sk_slotp[3];						//Percentage of shapekey slot influence
 } h3d_group;
 
 typedef struct
@@ -135,7 +136,8 @@ typedef struct{
     size_t tangentsSize;
     size_t jointsSize;
 	size_t weightsSize;
-    size_t* shapeKeysIndices; //Size is same as position/normals size
+	size_t shapeKeysSize;
+	size_t beginShapeKeyPointer;
 	size_t totalSize;
 }h3d_vboDescription;
 
@@ -158,6 +160,7 @@ private:
 					   float* emissive, float shininess, float transparency)> _uploadMaterialCallback;
 
 	std::function<void(int i, Mat4 transform)> _boneUploadCallback;
+	std::function<void(float p, int slot)> _shapeKeyPercentCallback;
 
 	bool _isAnimated;
 	int _currentFrame;
@@ -180,6 +183,9 @@ public:
 	void setMaterialUploadCallback(std::function<void(float ambient, float* diffuse, float* specular,
 					   float* emissive, float shininess, float transparency)> callback );
 	void setBoneUploadCallback(std::function<void(int i, Mat4 transform)> callback);
+	void setShapeKeyPercentCallback(std::function<void(float p, int slot)> callback);
+	void setupShapeKey(const std::string& groupName, const std::string& SKname, int slot);
+	void setShapeKeyPercent(const std::string& groupName, int slot, float percent);
 
 private:
 	void prepareGroup(h3d_group* group, unsigned int groupIndex);

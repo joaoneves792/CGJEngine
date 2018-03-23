@@ -28,6 +28,7 @@ H3DMesh::H3DMesh() {
 
     _uploadMaterialCallback = nullptr;
     _boneUploadCallback = nullptr;
+    _shapeKeyPercentCallback = nullptr;
 }
 
 H3DMesh::H3DMesh(const std::string &filename) {
@@ -49,6 +50,7 @@ H3DMesh::H3DMesh(const std::string &filename) {
 
     _uploadMaterialCallback = nullptr;
     _boneUploadCallback = nullptr;
+    _shapeKeyPercentCallback = nullptr;
 
     loadFromFile(filename);
     prepare();
@@ -64,6 +66,12 @@ H3DMesh::~H3DMesh() {
 void H3DMesh::Clear() {
     for(int i=0; i< _groupCount; i++){
         delete[] _groups[i].name;
+        for(int j=0; j<_groups[i].shapeKeyCount; j++){
+            auto sk = _groups[i].shapeKeys[j];
+            delete[] sk.name;
+        }
+        _groups[i].shapeKeyCount = 0;
+        delete[] _groups[i].shapeKeys;
     }
 
     freeMeshData();
@@ -88,6 +96,10 @@ void H3DMesh::freeMeshData() {
             delete[] _groups[i].vertices;
         if(_groups[i].triangles != nullptr)
             delete[] _groups[i].triangles;
+        for(int j=0; j<_groups[i].shapeKeyCount; j++){
+            auto sk = _groups[i].shapeKeys[j];
+            delete[] sk.vertices;
+        }
         _groups[i].vertices = nullptr;
         _groups[i].triangles = nullptr;
     }
@@ -136,6 +148,7 @@ void H3DMesh::prepareGroup(h3d_group *group, unsigned int groupIndex) {
     auto *texCoords = new GLfloat[group->numVertices*2];
     auto *bone_indices = new GLfloat[group->numVertices*BONE_COUNT];
     auto *bone_weights = new GLfloat[group->numVertices*BONE_COUNT];
+    auto *shape_keys = new GLfloat[group->numVertices*3*group->shapeKeyCount];
 
     auto *indices  = new indexInt[group->numTriangles*3];
 
@@ -192,6 +205,16 @@ void H3DMesh::prepareGroup(h3d_group *group, unsigned int groupIndex) {
         indices[ii++] = (indexInt)group->triangles[i].vertexIndices[2];
     }
 
+    vi = 0;
+    for(int i=0; i<group->shapeKeyCount;i++){
+        for(int j=0; j<group->shapeKeys[i].numVertices;j++){
+            shape_keys[vi+0] = group->shapeKeys[i].vertices->vertex[0];
+            shape_keys[vi+1] = group->shapeKeys[i].vertices->vertex[0];
+            shape_keys[vi+2] = group->shapeKeys[i].vertices->vertex[0];
+            vi += 3;
+        }
+    }
+
     glGenBuffers(1, &_vbo[groupIndex]);
 
     _vboDescriptions[groupIndex].positionSize     = sizeof(GLfloat)*group->numVertices*3;
@@ -200,14 +223,15 @@ void H3DMesh::prepareGroup(h3d_group *group, unsigned int groupIndex) {
     _vboDescriptions[groupIndex].textureCoordSize = sizeof(GLfloat)*group->numVertices*2;
     _vboDescriptions[groupIndex].jointsSize       = sizeof(GLfloat)*group->numVertices*BONE_COUNT;
     _vboDescriptions[groupIndex].weightsSize      = sizeof(GLfloat)*group->numVertices*BONE_COUNT;
-
+    _vboDescriptions[groupIndex].shapeKeysSize    = sizeof(GLfloat)*group->numVertices*3*group->shapeKeyCount;
     _vboDescriptions[groupIndex].totalSize = _vboDescriptions[groupIndex].positionSize
                                              + _vboDescriptions[groupIndex].normalsSize
                                              + _vboDescriptions[groupIndex].tangentsSize
                                              + _vboDescriptions[groupIndex].tangentsSize //bitangents
                                              + _vboDescriptions[groupIndex].textureCoordSize
                                              + _vboDescriptions[groupIndex].jointsSize
-                                             + _vboDescriptions[groupIndex].weightsSize;
+                                             + _vboDescriptions[groupIndex].weightsSize
+                                             + _vboDescriptions[groupIndex].shapeKeysSize;
 
     glBindBuffer(GL_ARRAY_BUFFER, _vbo[groupIndex]);
     glBufferData(GL_ARRAY_BUFFER, _vboDescriptions[groupIndex].totalSize, nullptr, GL_STATIC_DRAW);
@@ -227,6 +251,14 @@ void H3DMesh::prepareGroup(h3d_group *group, unsigned int groupIndex) {
     glBufferSubData(GL_ARRAY_BUFFER, accumulated_size, _vboDescriptions[groupIndex].jointsSize, bone_indices);
     accumulated_size += _vboDescriptions[groupIndex].jointsSize;
     glBufferSubData(GL_ARRAY_BUFFER, accumulated_size, _vboDescriptions[groupIndex].weightsSize, bone_weights);
+    accumulated_size += _vboDescriptions[groupIndex].weightsSize;
+
+    _vboDescriptions[groupIndex].beginShapeKeyPointer = accumulated_size;
+    for(int i=0; i<group->shapeKeyCount; i++){
+        glBufferSubData(GL_ARRAY_BUFFER, accumulated_size, _vboDescriptions[groupIndex].positionSize,
+                        (shape_keys+i*group->numVertices*3));
+        accumulated_size += _vboDescriptions[groupIndex].positionSize;
+    }
 
     //Set up the indices
     glGenBuffers(1, &_eab[groupIndex]);
@@ -264,6 +296,14 @@ void H3DMesh::prepareGroup(h3d_group *group, unsigned int groupIndex) {
 
     glVertexAttribPointer(BONEWEIGHTS__ATTR, BONE_COUNT, GL_FLOAT, GL_FALSE, 0, (GLvoid *)accumulated_size);
     glEnableVertexAttribArray(BONEWEIGHTS__ATTR);
+    accumulated_size += _vboDescriptions[groupIndex].weightsSize;
+
+    glVertexAttribPointer(SHAPEKEY_SLOT_1_ATTR, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
+    glEnableVertexAttribArray(SHAPEKEY_SLOT_1_ATTR);
+    glVertexAttribPointer(SHAPEKEY_SLOT_2_ATTR, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
+    glEnableVertexAttribArray(SHAPEKEY_SLOT_2_ATTR);
+    glVertexAttribPointer(SHAPEKEY_SLOT_3_ATTR, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
+    glEnableVertexAttribArray(SHAPEKEY_SLOT_3_ATTR);
 
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -278,6 +318,48 @@ void H3DMesh::prepareGroup(h3d_group *group, unsigned int groupIndex) {
     delete[] texCoords;
     delete[] bone_indices;
     delete[] bone_weights;
+    delete[] shape_keys;
+
+}
+
+void H3DMesh::setupShapeKey(const std::string &groupName, const std::string &SKname, int slot) {
+    int groupIndex = 0;
+    int shapeKeyIndex = 0;
+    for(;groupIndex < _groupCount; groupIndex++){
+        if(!groupName.compare(_groups[groupIndex].name))
+            break;
+    }
+    for(;shapeKeyIndex<_groups[groupIndex].shapeKeyCount;shapeKeyIndex++) {
+        if (!SKname.compare(_groups[groupIndex].shapeKeys[shapeKeyIndex].name))
+            break;
+    }
+    glBindVertexArray(_vao[groupIndex]);
+    glBindBuffer(GL_ARRAY_BUFFER, _vbo[groupIndex]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _eab[groupIndex]);
+
+    size_t SKPointer = _vboDescriptions[groupIndex].totalSize-_vboDescriptions[groupIndex].shapeKeysSize;
+    SKPointer += shapeKeyIndex*_vboDescriptions[groupIndex].positionSize;
+
+    glVertexAttribPointer((GLuint)SHAPEKEY_SLOT_1_ATTR+slot-1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat)*3,
+                          (GLvoid*)SKPointer);
+    glEnableVertexAttribArray((GLuint)SHAPEKEY_SLOT_1_ATTR+slot-1);
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void H3DMesh::setShapeKeyPercentCallback(std::function<void(float p, int slot)> callback) {
+    _shapeKeyPercentCallback = callback;
+}
+
+void H3DMesh::setShapeKeyPercent(const std::string &groupName, int slot, float percent) {
+    int groupIndex = 0;
+    for(;groupIndex < _groupCount; groupIndex++)
+        if(!groupName.compare(_groups[groupIndex].name))
+            break;
+
+    _groups[groupIndex].sk_slotp[slot-1] = percent;
 
 }
 
@@ -411,6 +493,11 @@ void H3DMesh::draw() {
             setMaterial(&_materials[materialIndex]);
         else
             glBindTexture(GL_TEXTURE_2D, 0);
+        if(_shapeKeyPercentCallback){
+            _shapeKeyPercentCallback(_groups[i].sk_slotp[0], 1);
+            _shapeKeyPercentCallback(_groups[i].sk_slotp[1], 2);
+            _shapeKeyPercentCallback(_groups[i].sk_slotp[2], 3);
+        }
         glBindVertexArray(_vao[i]);
         glDrawElements(GL_TRIANGLES, _groups[i].numTriangles*3, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
@@ -514,9 +601,12 @@ void H3DMesh::loadFromFile(const std::string& filename) {
             _groups[i].shapeKeys[j].vertices = new h3d_vertex[_groups[i].shapeKeys[j].numVertices];
             for(int k=0; k<_groups[i].shapeKeys[j].numVertices; k++) {
                 fread(_groups[i].shapeKeys[j].vertices[k].vertex, 3, sizeof(float), fp);
-                fread(_groups[i].shapeKeys[j].vertices[k].normal, 3, sizeof(float), fp);
+                //fread(_groups[i].shapeKeys[j].vertices[k].normal, 3, sizeof(float), fp);
             }
         }
+        _groups[i].sk_slotp[0] = 0.0f;
+        _groups[i].sk_slotp[1] = 0.0f;
+        _groups[i].sk_slotp[2] = 0.0f;
 
     }
 
