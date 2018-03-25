@@ -208,9 +208,9 @@ void H3DMesh::prepareGroup(h3d_group *group, unsigned int groupIndex) {
     vi = 0;
     for(int i=0; i<group->shapeKeyCount;i++){
         for(int j=0; j<group->shapeKeys[i].numVertices;j++){
-            shape_keys[vi+0] = group->shapeKeys[i].vertices->vertex[0];
-            shape_keys[vi+1] = group->shapeKeys[i].vertices->vertex[0];
-            shape_keys[vi+2] = group->shapeKeys[i].vertices->vertex[0];
+            shape_keys[vi+0] = group->shapeKeys[i].vertices[j].vertex[0];
+            shape_keys[vi+1] = group->shapeKeys[i].vertices[j].vertex[1];
+            shape_keys[vi+2] = group->shapeKeys[i].vertices[j].vertex[2];
             vi += 3;
         }
     }
