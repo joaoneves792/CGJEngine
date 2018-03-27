@@ -163,7 +163,7 @@ private:
 	std::function<void(float p, int slot)> _shapeKeyPercentCallback;
 
 	bool _isAnimated;
-	int _currentFrame;
+	std::vector<int> _currentAnimationFrames;
 
 public:
 	H3DMesh();
@@ -178,7 +178,7 @@ public:
 	void unload();
 	void draw();
 
-	void setCurrentFrame(int f);
+	void setCurrentFrame(int f, int animationSlot);
 
 	void setMaterialUploadCallback(std::function<void(float ambient, float* diffuse, float* specular,
 					   float* emissive, float shininess, float transparency)> callback );
@@ -194,7 +194,7 @@ private:
 	Mat4 recursiveBindPose(h3d_joint* joints, int i);
     Mat4 getBindPose(h3d_joint* joint);
 	void handleAnimation(h3d_group* group);
-    Mat4 getBoneTransform(h3d_joint* joint);
+    Mat4 getBoneTransform(h3d_joint* joint, int frame);
 };
 
 #endif // _H3DMESH_H_
