@@ -360,10 +360,20 @@ void H3DMesh::setShapeKeyPercent(const std::string &groupName, int slot, float p
 }
 
 void H3DMesh::setCurrentFrame(int f, int animationSlot) {
-    if(_currentAnimationFrames.size() <= animationSlot) {
-        _currentAnimationFrames.insert(_currentAnimationFrames.begin() + animationSlot, f);
+    setCurrentFrame(f, animationSlot, -1, -1);
+}
+
+void H3DMesh::setCurrentFrame(int f, int animationSlot, int start, int end) {
+    if(_animationSlotInfo.size() <= (unsigned int)animationSlot) {
+        auto animationInfo = new animationSlotInfo;
+        animationInfo->currentFrame = f;
+        animationInfo->startFrame = start;
+        animationInfo->endFrame = end;
+        _animationSlotInfo.insert(_animationSlotInfo.begin() + animationSlot, animationInfo);
     }else{
-        _currentAnimationFrames[animationSlot] = f;
+        _animationSlotInfo[animationSlot]->currentFrame = f;
+        _animationSlotInfo[animationSlot]->startFrame = start;
+        _animationSlotInfo[animationSlot]->endFrame = end;
     }
 }
 
@@ -376,7 +386,7 @@ void H3DMesh::recursiveParentTransform(Mat4* transforms, bool* hasParentTransfor
     }
 }
 
-Mat4 H3DMesh::getBoneTransform(h3d_joint* joint, int frame) {
+Mat4 H3DMesh::getBoneTransform(h3d_joint* joint, animationSlotInfo* animationInfo) {
     h3d_keyframe* prevKeyframe = nullptr;
     h3d_keyframe* nextKeyframe = nullptr;
 
@@ -387,9 +397,17 @@ Mat4 H3DMesh::getBoneTransform(h3d_joint* joint, int frame) {
         }else{
             prevKeyframe = nextKeyframe;
         }
-        if(nextKeyframe->frame > frame){
+        if(nextKeyframe->frame > animationInfo->currentFrame){
             break;
         }
+    }
+
+    if(nullptr == prevKeyframe || nullptr == nextKeyframe){
+        return Mat4(1.0f);
+    }
+    if( (prevKeyframe->frame < animationInfo->startFrame && animationInfo->startFrame >= 0) ||
+            (nextKeyframe->frame > animationInfo->endFrame && animationInfo->endFrame >= 0) ){
+        return Mat4(1.0f);
     }
 
     if(joint->numKeyframes > 0) {
@@ -397,7 +415,7 @@ Mat4 H3DMesh::getBoneTransform(h3d_joint* joint, int frame) {
         if (nextKeyframe->frame - prevKeyframe->frame == 0) {
             lerpFactor = 0;
         } else {
-            lerpFactor = ((float)(frame - prevKeyframe->frame)) /
+            lerpFactor = ((float)(animationInfo->currentFrame - prevKeyframe->frame)) /
                          ((float)(nextKeyframe->frame - prevKeyframe->frame));
         }
         //std::cout << lerpFactor << std::endl;
@@ -455,8 +473,8 @@ void H3DMesh::handleAnimation(h3d_group* group) {
 
         glm::mat4 transform = Mat4(1.0f);
 
-        for(int frame : _currentAnimationFrames) {
-             transform *= getBoneTransform(&armature->joints[i], frame);
+        for(animationSlotInfo* info : _animationSlotInfo) {
+             transform *= getBoneTransform(&armature->joints[i], info);
         }
         glm::mat4 bindPose = armature->joints[i].bindPose;
 

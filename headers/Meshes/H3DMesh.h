@@ -141,6 +141,12 @@ typedef struct{
 	size_t totalSize;
 }h3d_vboDescription;
 
+typedef struct{
+	int currentFrame;
+	int startFrame;
+	int endFrame;
+}animationSlotInfo;
+
 class H3DMesh : public Mesh{
 private:
 	h3d_group* _groups;
@@ -163,7 +169,7 @@ private:
 	std::function<void(float p, int slot)> _shapeKeyPercentCallback;
 
 	bool _isAnimated;
-	std::vector<int> _currentAnimationFrames;
+	std::vector<animationSlotInfo*> _animationSlotInfo;
 
 public:
 	H3DMesh();
@@ -179,6 +185,7 @@ public:
 	void draw();
 
 	void setCurrentFrame(int f, int animationSlot);
+	void setCurrentFrame(int f, int animationSlot, int start, int end);
 
 	void setMaterialUploadCallback(std::function<void(float ambient, float* diffuse, float* specular,
 					   float* emissive, float shininess, float transparency)> callback );
@@ -194,7 +201,7 @@ private:
 	Mat4 recursiveBindPose(h3d_joint* joints, int i);
     Mat4 getBindPose(h3d_joint* joint);
 	void handleAnimation(h3d_group* group);
-    Mat4 getBoneTransform(h3d_joint* joint, int frame);
+    Mat4 getBoneTransform(h3d_joint* joint, animationSlotInfo* animationInfo);
 };
 
 #endif // _H3DMESH_H_
