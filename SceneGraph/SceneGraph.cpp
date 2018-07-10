@@ -70,7 +70,7 @@ void SceneGraph::draw(Shader *shader) {
 
 void SceneGraph::draw(int level, Shader *shader) {
     if(_root != nullptr)
-        _root->draw(level, Mat4(1.0f), Quat(), Mat4(1.0f), shader);
+        _root->draw(level, Mat4(1.0f), Quat(1.0f, 0.0f, 0.0f, 0.0f), Mat4(1.0f), shader);
 
 }
 

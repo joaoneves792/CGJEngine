@@ -21,8 +21,9 @@ Mat4 FreeCamera::produceViewMatrix() {
 }
 
 Mat4 FreeCamera::getInverseViewMatrix() {
-    return glm::translate(Mat4(1.0f), Vec3(_position[0], _position[1], _position[2]))*
-            glm::toMat4(glm::inverse(_orientation));
+    return glm::inverse(getViewMatrix());
+    /*return glm::translate(Mat4(1.0f), Vec3(_position[0], _position[1], _position[2]))*
+            glm::toMat4(glm::inverse(_orientation));*/
 }
 
 void FreeCamera::move(float x, float y, float z){
