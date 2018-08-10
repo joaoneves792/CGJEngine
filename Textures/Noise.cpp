@@ -79,7 +79,6 @@ void Noise::createTextures(float *data) const {
     int mipmapSize = _size;
     while(mipmapSize > 1){ mipmapSize/=2; mipmapCount++;}
     mipmapCount = (mipmapCount > _mipmapLevel)? _mipmapLevel:mipmapCount;
-    std::cout << mipmapCount << std::endl;
 
     auto mipmaps = new float**[_layers];
     //mipmaps[layer][level][xycolor]
@@ -94,12 +93,12 @@ void Noise::createTextures(float *data) const {
             //adapted box filter
             for(int x=0;x<prevSize;x=x+2){
                 for(int y=0;y<prevSize;y=y+2){
-                    /*float alpha = MIPMAP(layer, level-1, prevSize, x, y, 3)+MIPMAP(layer, level-1, prevSize, x+1, y, 3)+
+                    float alpha = MIPMAP(layer, level-1, prevSize, x, y, 3)+MIPMAP(layer, level-1, prevSize, x+1, y, 3)+
                                        MIPMAP(layer, level-1, prevSize, x, y+1, 3)+MIPMAP(layer, level-1, prevSize, x+1, y+1, 3);
-                    MIPMAP(layer, level, mipmapSize, x/2, y/2, 3) = alpha/4.0f;*/
-                    float alpha = fmax(fmax(MIPMAP(layer, level-1, prevSize, x, y, 3),MIPMAP(layer, level-1, prevSize, x+1, y, 3)),
+                    MIPMAP(layer, level, mipmapSize, x/2, y/2, 3) = alpha/4.0f;
+                    /*float alpha = fmax(fmax(MIPMAP(layer, level-1, prevSize, x, y, 3),MIPMAP(layer, level-1, prevSize, x+1, y, 3)),
                                        fmax(MIPMAP(layer, level-1, prevSize, x, y+1, 3),MIPMAP(layer, level-1, prevSize, x+1, y+1, 3)));
-                    MIPMAP(layer, level, mipmapSize, x/2, y/2, 3) = alpha;
+                    MIPMAP(layer, level, mipmapSize, x/2, y/2, 3) = alpha;*/
                     for(int c=0;c<3;c++){
                         int count = 0;
                         float color = 0.0f;
@@ -111,6 +110,8 @@ void Noise::createTextures(float *data) const {
 
                         if(count > 0.0f)
                             MIPMAP(layer, level, mipmapSize, x/2, y/2, c) = color/count;
+                        else
+                            MIPMAP(layer, level, mipmapSize, x/2, y/2, c) = 0.0f;
                     }
 
                 }
@@ -128,7 +129,7 @@ void Noise::createTextures(float *data) const {
         if(GLEW_EXT_texture_filter_anisotropic){
             GLfloat largestAnisotropic;
             glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &largestAnisotropic);
-            //glGenerateMipmap(GL_TEXTURE_2D);
+            glGenerateMipmap(GL_TEXTURE_2D);
             mipmapSize = _size;
             for(int level=1;level<=mipmapCount;level++) {
                 mipmapSize = mipmapSize/2;
