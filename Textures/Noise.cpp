@@ -147,6 +147,14 @@ void Noise::createTextures(float *data) const {
         _textures[i] = texID;
     }
 
+    for(int layer=0; layer<_layers; layer++) {
+        for (int mipmap = 0; mipmap < mipmapCount; mipmap++)
+            delete[] mipmaps[layer][mipmap];
+        delete[] mipmaps[layer];
+    }
+    delete[] mipmaps;
+
+
 }
 
 float *Noise::createLayers() const {
@@ -198,7 +206,7 @@ void Noise::generateSimpleNoise(int density, int seed){
 
 
     // Loop across all the pixels, and make the top layer of pixels more
-// transparent (top hairs)
+    // transparent (top hairs)
     for (int x = 0; x < _size; x++)
         for (int y = 0; y < _size; y++)
             for(int layer=0; layer < _layers; layer++){
@@ -215,22 +223,22 @@ void Noise::generateSimpleNoise(int density, int seed){
 
     // Well now, hairs that are closer to the center are darker as they get less light
     // so lets make hairs closer to the center darker?
-        for (int x = 0; x < _size; x++)
-            for (int y = 0; y < _size; y++)
-                for(int layer=0; layer < _layers; layer++) {
-                    // length of the hair
-                    float length = (float)layer / _layers; // 0 to 1
+    for (int x = 0; x < _size; x++)
+        for (int y = 0; y < _size; y++)
+            for(int layer=0; layer < _layers; layer++) {
+                // length of the hair
+                float length = (float)layer / _layers; // 0 to 1
 
-                    // tip of the hair is semi-transparent
-                    float scale = 1-length;
-                    scale = (scale > 0.9f)?0.9f:scale;
-                    float alpha = DATA_A(layer, x, y);
-                    if( alpha > 0.0f ) {
-                        DATA_R(layer, x, y) *= scale;
-                        DATA_G(layer, x, y) *= scale;
-                        DATA_B(layer, x, y) *= scale;
-                    }
+                // tip of the hair is semi-transparent
+                float scale = 1-length;
+                scale = (scale > 0.9f)?0.9f:scale;
+                float alpha = DATA_A(layer, x, y);
+                if( alpha > 0.0f ) {
+                    DATA_R(layer, x, y) *= scale;
+                    DATA_G(layer, x, y) *= scale;
+                    DATA_B(layer, x, y) *= scale;
                 }
+            }
 
 
     createTextures(data);
