@@ -57,7 +57,9 @@ typedef struct
 	int             frame;
 	float           position[3];						//local reference
 	float           rotation[3];						//local reference
-    Mat4		    transform;
+    Vec3		    translation;
+    Quat            orientation;
+
 }h3d_keyframe;
 
 typedef struct
@@ -173,6 +175,7 @@ private:
 
 	bool _isAnimated;
 	std::vector<animationSlotInfo*> _animationSlotInfo;
+	int _currentFrame;
 
 public:
 	H3DMesh();
