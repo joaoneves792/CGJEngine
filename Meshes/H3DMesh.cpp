@@ -362,6 +362,10 @@ void H3DMesh::setShapeKeyPercent(const std::string &groupName, int slot, float p
 
 }
 
+void H3DMesh::setCurrentFrame(float f) {
+    _currentFrame = f;
+}
+
 void H3DMesh::setCurrentFrame(int f, int animationSlot) {
     _currentFrame = f;
     //setCurrentFrame(f, animationSlot, -1, -1);

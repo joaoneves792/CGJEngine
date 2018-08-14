@@ -175,7 +175,7 @@ private:
 
 	bool _isAnimated;
 	std::vector<animationSlotInfo*> _animationSlotInfo;
-	int _currentFrame;
+	float _currentFrame;
 
 public:
 	H3DMesh();
@@ -191,6 +191,7 @@ public:
 	void draw();
 	void drawGroup(const std::string& name);
 
+	void setCurrentFrame(float f);
 	void setCurrentFrame(int f, int animationSlot);
 	void setCurrentFrame(int f, int animationSlot, int start, int end);
 
