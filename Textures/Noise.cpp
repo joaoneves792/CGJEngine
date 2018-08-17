@@ -147,6 +147,14 @@ void Noise::createTextures(float *data) const {
         _textures[i] = texID;
     }
 
+    for(int layer=0; layer<_layers; layer++) {
+        for (int mipmap = 0; mipmap < mipmapCount; mipmap++)
+            delete[] mipmaps[layer][mipmap];
+        delete[] mipmaps[layer];
+    }
+    delete[] mipmaps;
+
+
 }
 
 float *Noise::createLayers() const {
@@ -221,7 +229,6 @@ void Noise::generateSimpleNoise(int density, int seed){
                     DATA_B(layer, x, y) *= scale;
                 }
             }
-
     createTextures(data);
     delete[] data;
 }
