@@ -106,8 +106,13 @@ void VRCamera::updatePose() {
 
     if (_trackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid )
     {
-        _orientation = glm::toQuat(glm::inverse(_devicePose[vr::k_unTrackedDeviceIndex_Hmd])) * _correction;
+        _rawOrientation = glm::toQuat(glm::inverse(_devicePose[vr::k_unTrackedDeviceIndex_Hmd]));
+        _orientation = _correction * _rawOrientation;
     }
+}
+
+void VRCamera::recenter() {
+    _correction = glm::inverse(_rawOrientation);
 }
 
 void VRCamera::submit(ColorTextureFrameBuffer *leftFBO, ColorTextureFrameBuffer *rightFBO) {
@@ -160,9 +165,6 @@ void VRCamera::changeOrientation(float yaw, float pitch, float roll){
     calculateBillboard();
 }
 
-void VRCamera::recenter() {
-    _correction = glm::inverse(_orientation);
-}
 
 void VRCamera::resize(int x, int y) {
     Camera::resize(x, y);

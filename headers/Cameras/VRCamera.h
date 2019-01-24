@@ -22,6 +22,7 @@ private:
     Mat4 _eyeProjection[2];
     Mat4 _eyeInverseProjection[2];
     Mat4 _eyeTransform[2];
+    Quat _rawOrientation;
     Quat _correction;
     vr::IVRSystem* _hmd;
     vr::TrackedDevicePose_t _trackedDevicePose[ vr::k_unMaxTrackedDeviceCount ];
