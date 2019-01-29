@@ -10,10 +10,21 @@
 
 #include <GL/glew.h>
 
+extern "C" {
+#ifdef FREEIMG
+#include <FreeImage.h>
+#endif
+}
+
 typedef struct {
+#ifdef FREEIMG
+    FIBITMAP* fibitmap;
+#endif
     int width;
     int height;
-    bool alpha;
+    GLint internalFormat;
+    GLenum format;
+    GLenum type;
     bool compressed;
     GLsizei data_lenght;
     unsigned char *data;
