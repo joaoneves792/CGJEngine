@@ -367,7 +367,7 @@ int loadFreeImage(const char* filename, textureImage *texture){
             return 0;
     }
 
-    std::cout << bpp << FreeImage_GetColorType(image) << FIC_RGB << FIC_CMYK << FIC_PALETTE << FIC_RGBALPHA << std::endl;
+    //std::cout << bpp << FreeImage_GetColorType(image) << FIC_RGB << FIC_CMYK << FIC_PALETTE << FIC_RGBALPHA << std::endl;
 
     texture->width = FreeImage_GetWidth(image);
     texture->height = FreeImage_GetHeight(image);
