@@ -117,7 +117,8 @@ void H3DMesh::unload() {
 
     }
     for(int i=0; i< _materialCount; i++){
-        glDeleteTextures(1, (GLuint *)&_materials[i].textureId);
+        for(unsigned int j=0; j<_materials[i].textureCount; i++)
+            ResourceManager::getInstance()->destroyTexture(_materials[i].textureImage[i]);
     }
 
     Clear();
@@ -569,7 +570,7 @@ void H3DMesh::setMaterial(h3d_material *material){
 
     for(unsigned int i=0;i<material->textureCount;i++) {
         glActiveTexture(GL_TEXTURE0 + i);
-        glBindTexture(GL_TEXTURE_2D, (GLuint) material->textureId[i]);
+        material->texture[i]->bind();
     }
 }
 
@@ -673,7 +674,7 @@ void H3DMesh::loadFromFile(const std::string& filename) {
         //Get the texture file
         fread(&_materials[i].textureCount, 1, sizeof(int), fp);
         _materials[i].textureImage = new char*[_materials[i].textureCount];
-        _materials[i].textureId = new GLint[_materials[i].textureCount];
+        _materials[i].texture = new Texture*[_materials[i].textureCount];
         for(unsigned int j=0; j<_materials[i].textureCount;j++) {
             byte numChars;
             fread(&numChars, 1, sizeof(byte), fp);
@@ -686,9 +687,9 @@ void H3DMesh::loadFromFile(const std::string& filename) {
                 std::string texturePath("./");
                 texturePath.assign(folderPath);
                 texturePath.append(_materials[i].textureImage[j]);
-                _materials[i].textureId[j] = Texture::LoadGLTexture(texturePath.c_str());
+                _materials[i].texture[j] = ResourceManager::Factory::createTexture(texturePath);
             } else {
-                _materials[i].textureId[j] = -1;
+                _materials[i].texture[j] = nullptr;
             }
         }
         fread(&_materials[i].ambient, 1, sizeof(float), fp);

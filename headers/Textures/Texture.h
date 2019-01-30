@@ -8,6 +8,7 @@
 #ifndef TEXTURES_H_
 #define TEXTURES_H_
 
+#include <string>
 #include <GL/glew.h>
 
 extern "C" {
@@ -28,11 +29,15 @@ typedef struct {
     bool compressed;
     GLsizei data_lenght;
     unsigned char *data;
+    GLuint GLtexture;
 }textureImage;
 
 class Texture{
 private:
     GLuint _texture;
+    int _width;
+    int _height;
+    const std::string _name;
 public:
     Texture(std::string filename);
     Texture(const std::string& right, const std::string& left, const std::string& top,
@@ -46,8 +51,9 @@ public:
     void bind();
     void bindCubeMap();
     void generateRandom(int width);
+    const std::string& getName();
 
-    static GLuint LoadGLTexture(const char *filename);
+    static textureImage* LoadGLTexture(const char *filename);
 private:
     static textureImage* LoadFromFile(const char* name);
 

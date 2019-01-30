@@ -403,14 +403,26 @@ GLuint generateGLTexture(textureImage* texti){
 
 Texture::Texture() {
     _texture = 0;
+    _width = -1;
+    _height = -1;
 }
 
 Texture::Texture(GLuint texture) {
     _texture = texture;
+    _width = -2;
+    _height = -2;
 }
 
-Texture::Texture(std::string filename) {
-    _texture = LoadGLTexture(filename.c_str());
+Texture::Texture(std::string filename) : _name(filename) {
+    textureImage* ti = LoadGLTexture(filename.c_str());
+    _texture = ti->GLtexture;
+    _width = ti->width;
+    _height = ti->height;
+    free(ti);
+}
+
+const std::string& Texture::getName() {
+    return _name;
 }
 
 GLuint Texture::getTexture() {
@@ -453,7 +465,7 @@ textureImage* Texture::LoadFromFile(const char* name) {
     return texti;
 }
 
-GLuint Texture::LoadGLTexture(const char* name){
+textureImage* Texture::LoadGLTexture(const char* name){
     textureImage* texti = LoadFromFile(name);
     GLuint textureID = 0;
 
@@ -466,10 +478,9 @@ GLuint Texture::LoadGLTexture(const char* name){
         if (texti->data)
            free(texti->data);
 #endif
-        free(texti);
     }
-
-	return textureID;
+    texti->GLtexture = textureID;
+	return texti;
 }
 
 Texture::Texture(const std::string &right, const std::string &left, const std::string &top, const std::string &bottom,
