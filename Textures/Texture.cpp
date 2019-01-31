@@ -401,13 +401,13 @@ GLuint generateGLTexture(textureImage* texti){
 	return texID;
 }
 
-Texture::Texture() {
+Texture::Texture() : _name("anonymous"){
     _texture = 0;
     _width = -1;
     _height = -1;
 }
 
-Texture::Texture(GLuint texture) {
+Texture::Texture(GLuint texture): _name("anonymous_copy") {
     _texture = texture;
     _width = -2;
     _height = -2;
@@ -427,6 +427,14 @@ const std::string& Texture::getName() {
 
 GLuint Texture::getTexture() {
     return _texture;
+}
+
+int Texture::getWidth() {
+    return _width;
+}
+
+int Texture::getHeight() {
+    return _height;
 }
 
 void Texture::destroyTexture() {
@@ -484,11 +492,13 @@ textureImage* Texture::LoadGLTexture(const char* name){
 }
 
 Texture::Texture(const std::string &right, const std::string &left, const std::string &top, const std::string &bottom,
-                 const std::string &back, const std::string &front) {
+                 const std::string &back, const std::string &front) : _name("cube") {
     textureImage* texti;
     GLuint textureID = 0;
     std::vector<std::string> faces = {right, left, top, bottom, back, front};
 
+    _width = -8;
+    _height = -8;
 
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
@@ -545,6 +555,8 @@ void Texture::generateRandom(int width) {
 
     delete[] texture;
 
+    _width = width;
+    _height = height;
 }
 
 void Texture::bindCubeMap() {

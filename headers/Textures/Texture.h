@@ -52,6 +52,8 @@ public:
     void bindCubeMap();
     void generateRandom(int width);
     const std::string& getName();
+    int getWidth();
+    int getHeight();
 
     static textureImage* LoadGLTexture(const char *filename);
 private:
