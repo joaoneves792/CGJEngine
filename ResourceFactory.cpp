@@ -5,6 +5,7 @@
 #include <Textures/Texture.h>
 #include <FBOs/MSFrameBuffer.h>
 #include <Cameras/VRCamera.h>
+#include <Cameras/OpenVRCamera.h>
 #include "ResourceManager.h"
 #include "Meshes/Mesh.h"
 #include "Meshes/OBJMesh.h"
@@ -72,8 +73,12 @@ HUDCamera* ResourceManager::Factory::createHUDCamera(const std::string &name, fl
 }
 
 VRCamera* ResourceManager::Factory::createVRCamera(const std::string &name, Vec3 position, Quat orientation) {
-    auto camera = new VRCamera(position, orientation);
+#ifdef OPENVR //For backwards compatibility createVRCamera produces an OpenVRCamera
+    auto camera = new OpenVRCamera(position, orientation);
     ResourceManager::getInstance()->addCamera(name, camera);
+#else
+    VRCamera* camera = nullptr;
+#endif
     return camera;
 }
 
