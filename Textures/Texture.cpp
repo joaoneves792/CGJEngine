@@ -512,7 +512,11 @@ Texture::Texture(const std::string &right, const std::string &left, const std::s
                          texti->width, texti->height, 0,
                          texti->format,
                          texti->type, texti->data);
+#ifdef FREEIMG
+            FreeImage_Unload(texti->fibitmap);
+#else
             free(texti->data);
+#endif
             free(texti);
         }else{
             std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
