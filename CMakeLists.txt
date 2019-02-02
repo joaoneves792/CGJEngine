@@ -33,6 +33,7 @@ set(SOURCE_FILES
     	Cameras/HUDCamera.cpp
         Cameras/Camera.cpp
         Cameras/OpenVRCamera.cpp
+        Cameras/OpenHMDCamera.cpp
     	SceneGraph/SceneGraph.cpp
 	    SceneGraph/SceneNode.cpp
     	SceneGraph/LightNode.cpp
@@ -75,6 +76,7 @@ set(HEADER_FILES
 		headers/Cameras/SphereCamera.h
 		headers/Cameras/VRCamera.h
         headers/Cameras/OpenVRCamera.h
+        headers/Cameras/OpenHMDCamera.h
         headers/Textures/Texture.h
 		headers/Particles/ParticlePool.h
 		headers/Particles/Particle.h

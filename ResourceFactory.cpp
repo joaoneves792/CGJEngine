@@ -6,6 +6,7 @@
 #include <FBOs/MSFrameBuffer.h>
 #include <Cameras/VRCamera.h>
 #include <Cameras/OpenVRCamera.h>
+#include <Cameras/OpenHMDCamera.h>
 #include "ResourceManager.h"
 #include "Meshes/Mesh.h"
 #include "Meshes/OBJMesh.h"
@@ -35,7 +36,8 @@ Mesh* ResourceManager::Factory::createMesh(const std::string &name, const std::s
 
 Shader* ResourceManager::Factory::createShader(const std::string &name, const std::string &vertexShader,
                                       const std::string& fragmentShader) {
-    auto shader = new Shader(vertexShader.c_str(), fragmentShader.c_str());
+    auto shader = new Shader();
+    shader->loadFromFiles(vertexShader.c_str(), fragmentShader.c_str());
     ResourceManager::getInstance()->addShader(name, shader);
     return shader;
 }
@@ -75,6 +77,20 @@ HUDCamera* ResourceManager::Factory::createHUDCamera(const std::string &name, fl
 VRCamera* ResourceManager::Factory::createVRCamera(const std::string &name, Vec3 position, Quat orientation) {
 #ifdef OPENVR //For backwards compatibility createVRCamera produces an OpenVRCamera
     auto camera = new OpenVRCamera(position, orientation);
+    ResourceManager::getInstance()->addCamera(name, camera);
+#else
+    VRCamera* camera = nullptr;
+#endif
+    return camera;
+}
+
+VRCamera* ResourceManager::Factory::createOpenVRCamera(const std::string &name, Vec3 position, Quat orientation) {
+    return createVRCamera(name, position, orientation);
+}
+
+VRCamera* ResourceManager::Factory::createOpenHMDCamera(const std::string &name, Vec3 position, Quat orientation) {
+#ifdef OPENHMD
+    auto camera = new OpenHMDCamera(position, orientation);
     ResourceManager::getInstance()->addCamera(name, camera);
 #else
     VRCamera* camera = nullptr;

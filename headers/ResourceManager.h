@@ -58,6 +58,8 @@ public:
         static HUDCamera* createHUDCamera(const std::string& name,
                                           float left, float right, float top, float bottom, float near, float far, bool scale);
         static VRCamera* createVRCamera(const std::string& name, Vec3 position, Quat orientation);
+        static VRCamera* createOpenVRCamera(const std::string& name, Vec3 position, Quat orientation);
+        static VRCamera* createOpenHMDCamera(const std::string& name, Vec3 position, Quat orientation);
         static ParticlePool* createParticlePool(const std::string& name, int particleCount, SceneGraph* scene);
         static ParticleEmitterNode* createParticleEmmiter(const std::string& name, ParticlePool* pool,
                                                           Shader* shader, Texture* texture, Vec3 acceleration,
