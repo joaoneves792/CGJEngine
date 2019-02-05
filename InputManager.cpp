@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <map>
 #include <chrono>
+#include <iostream>
 #include "InputManager.h"
 
 
@@ -16,6 +17,7 @@ InputManager* InputManager::getInstance() {
     if(_ourInstance == nullptr){
         _ourInstance = new InputManager();
         _ourInstance->_lastUpdateTime = getTime();
+        _ourInstance->_updateInterval = 0;
     }
     return _ourInstance;
 }
